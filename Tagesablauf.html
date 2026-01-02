@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tagesablauf – Marketing & Design (08:00–16:30)</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --text:#e8eef7;
+      --muted:#a9b6c7;
+      --border:rgba(255,255,255,.08);
+      --accent:#e3a3ff;
+      --good:#68f3b2;
+      --warn:#ffd166;
+      --bad:#ff6b6b;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background: radial-gradient(1200px 800px at 20% 0%, rgba(151, 110, 255, 0.12), transparent 60%),
+                  radial-gradient(900px 700px at 90% 20%, rgba(151, 110, 255, 0.12), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      padding: 20px;
+    }
+    header{
+      max-width: 1100px;
+      margin: 0 auto 18px auto;
+      display:flex;
+      gap: 14px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    header .title{ display:flex; flex-direction:column; gap:6px; }
+    h1{ margin:0; font-size: 20px; letter-spacing:.2px; }
+    .sub{ color:var(--muted); font-size: 13px; line-height:1.3; }
+
+    .actions{ display:flex; gap: 10px; align-items:center; flex-wrap:wrap; }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      cursor:pointer;
+      font-weight:600;
+      font-size: 13px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .pill{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:999px;
+      background: var(--muted);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.06);
+    }
+    .dot.good{ background: var(--good); }
+    .dot.warn{ background: var(--warn); }
+    .dot.bad{ background: var(--bad); }
+
+    main{
+      max-width: 1100px;
+      margin: 0 auto;
+      display:grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 920px){
+      main{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+    }
+    .card .hd h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing:.2px;
+    }
+    .card .bd{ padding: 16px; }
+
+    .phase-name{ font-size: 22px; margin: 2px 0 8px 0; letter-spacing:.2px; }
+    .phase-time{
+      display:flex; gap: 10px; flex-wrap:wrap; align-items:center;
+      margin-bottom: 12px; color:var(--muted); font-size: 13px;
+    }
+
+    .timer{
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 32px;
+      letter-spacing: .6px;
+      margin: 12px 0 6px 0;
+    }
+    .progress{
+      height: 10px;
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      border-radius: 999px;
+      overflow:hidden;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(151, 110, 255, 0.8), rgba(104,243,178,.8));
+    }
+
+    .desc{ margin-top: 12px; color: var(--text); line-height:1.5; font-size: 14px; }
+    .desc ul{ margin: 10px 0 0 18px; color: var(--muted); }
+    .desc li{ margin: 4px 0; }
+
+    .next{ display:flex; flex-direction:column; gap: 10px; }
+    .next-card{
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.12);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .next-title{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:8px; margin-bottom: 6px;
+    }
+    .next-title strong{ font-size: 14px; }
+    .next-title span{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .next-desc{ color: var(--muted); font-size: 13px; line-height:1.4; }
+
+    .notes textarea{
+      width:100%;
+      min-height: 220px;
+      resize: vertical;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.20);
+      color: var(--text);
+      padding: 12px;
+      font-size: 14px;
+      line-height:1.5;
+      outline:none;
+    }
+    .notes textarea:focus{
+      border-color: rgba(204, 110, 255, 0.45);
+      box-shadow: 0 0 0 4px rgba(187, 110, 255, 0.1);
+    }
+    .notes .meta{
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      flex-wrap:wrap;
+    }
+    .kbd{
+      font-family: var(--mono);
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      padding: 2px 6px;
+      border-radius: 8px;
+      color: var(--text);
+    }
+
+    /* Toggle */
+    .toggle{
+      display:inline-flex;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.12);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 4px;
+      align-items:center;
+    }
+    .toggle button{
+      appearance:none;
+      border:0;
+      background: transparent;
+      color: var(--muted);
+      padding: 7px 10px;
+      border-radius: 999px;
+      cursor:pointer;
+      font-weight:700;
+      font-size: 12px;
+    }
+    .toggle button[aria-pressed="true"]{
+      background: linear-gradient(180deg, rgba(180, 110, 255, 0.22), rgba(187, 104, 243, 0.12));
+      color: var(--text);
+      box-shadow: 0 8px 18px rgba(0,0,0,.25);
+    }
+
+    .footer-hint{
+      max-width: 1100px;
+      margin: 14px auto 0 auto;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .footer-hint code{
+      font-family: var(--mono);
+      color: var(--text);
+      background: rgba(255,255,255,.05);
+      border:1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="title">
+      <h1>Realtimer Tagesablauf (Marketing & Design)</h1>
+      <div class="sub">
+        Arbeitszeit: <strong>08:00–16:30</strong> · Pause: <strong>13:00–13:30</strong>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="pill" id="notifStatus">
+        <span class="dot bad" id="notifDot"></span>
+        <span id="notifText">Benachrichtigungen: nicht aktiv</span>
+      </div>
+
+      <button class="btn" id="btnEnableNotif" type="button">
+        🔔 Benachrichtigungen aktivieren
+      </button>
+
+      <button class="btn" id="btnTestNotif" type="button">
+        🧪 Test-Benachrichtigung
+      </button>
+
+      <button class="btn" id="btnClearNotes" type="button">
+        🧽 Notizen löschen
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card" aria-live="polite">
+      <div class="hd">
+        <h2>Aktuelle Phase</h2>
+        <div class="pill" title="Aktuelle Uhrzeit">
+          <span class="dot good"></span>
+          <span id="clockText">--:--:--</span>
+        </div>
+      </div>
+
+      <div class="bd">
+        <div class="phase-name" id="phaseName">–</div>
+        <div class="phase-time" id="phaseTime">–</div>
+
+        <div class="timer" id="phaseTimer">--:--</div>
+        <div class="progress" aria-label="Fortschritt in dieser Phase">
+          <div class="bar" id="progressBar"></div>
+        </div>
+
+        <div class="desc" id="phaseDesc"></div>
+      </div>
+    </section>
+
+    <aside class="card">
+      <div class="hd">
+        <h2>Nächste Phasen</h2>
+        <div class="pill">
+          <span class="dot warn"></span>
+          <span id="nextIn">in –</span>
+        </div>
+      </div>
+
+      <div class="bd">
+        <div class="next" id="nextWrap"></div>
+      </div>
+    </aside>
+
+    <section class="card notes" style="grid-column: 1 / -1;">
+      <div class="hd">
+        <h2>Notizen</h2>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <div class="toggle" role="group" aria-label="Notizen Modus">
+            <button id="btnModeToday" type="button" aria-pressed="true" title="Notizen nur für heute (reset um Mitternacht)">
+              Heute
+            </button>
+            <button id="btnModeGlobal" type="button" aria-pressed="false" title="Dauerhafte Notizen (bleiben erhalten)">
+              Global
+            </button>
+          </div>
+          <div class="pill" title="Wird automatisch gespeichert">
+            <span class="dot good"></span>
+            <span>Auto-Save</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bd">
+        <textarea id="notes" placeholder="Notizen…"></textarea>
+        <div class="meta">
+          <span id="notesInfo">—</span>
+          <span>
+            Tipp: <span class="kbd">Strg</span> + <span class="kbd">F</span> durchsuchen ·
+            <span class="kbd">Strg</span> + <span class="kbd">S</span> nicht nötig
+          </span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="footer-hint">
+    🔔 Benachrichtigungen: Falls du lokal öffnest und es zickt, starte im Ordner einen Server:
+    <code>python -m http.server</code> und öffne <code>http://localhost:8000</code>.
+  </div>
+
+  <script>
+    // ----------------- Schedule -----------------
+    const SCHEDULE = [
+      { name:"Creative Warm-up & Tagesfokus", start:"08:00", end:"08:20",
+        summary:"Kurz inspirieren, Tagesziele setzen, Fokus schärfen.",
+        bullets:["Inspiration (max. 1–2 Quellen)","Deadlines / Kampagnen kurz checken","1 Hauptziel + 2 Nebenziele festlegen"]
+      },
+      { name:"Deep Creative Work (Ideen & Konzepte)", start:"08:20", end:"10:00",
+        summary:"Output-Modus: erzeugen, nicht bewerten.",
+        bullets:["Kampagnenideen, Layout-Rohfassungen, Claims","UX-Skizzen / Struktur","Regel: kein Mail/Chat, kein Feedback, kein Feinschliff"]
+      },
+      { name:"Reset", start:"10:00", end:"10:10",
+        summary:"Kurzer körperlicher Break – Bildschirm weg.",
+        bullets:["Aufstehen, bewegen, trinken","Blick in die Ferne / Fenster","Kein Scrollen"]
+      },
+      { name:"Marketing-Operatives & Feedback", start:"10:10", end:"11:30",
+        summary:"Bewusst zersplitterte Aufgaben: Kommunikation & Kleinkram.",
+        bullets:["Mails, Abstimmungen, Feedback einarbeiten","Social Posts / Copy-Varianten vorbereiten","Kleine To-dos bündeln"]
+      },
+      { name:"Strategie & Veredelung", start:"11:30", end:"12:45",
+        summary:"Vormittagsideen veredeln – sauber, präsentationsfähig.",
+        bullets:["Designs finalisieren, Texte schärfen","Kampagnenstruktur / Brand-Konsistenz","Präsentation / Übergabe vorbereiten"]
+      },
+      { name:"Pause", start:"13:00", end:"13:30",
+        summary:"Fixe Pause: Abstand, Ortswechsel, kein Input.",
+        bullets:["Kein 'nur kurz…'","Kein Design-/Marketing-Input","Gehirn im Hintergrund arbeiten lassen"]
+      },
+      { name:"Analyse, Planung & Performance", start:"13:30", end:"14:45",
+        summary:"KPIs & Learnings: planen statt improvisieren.",
+        bullets:["KPIs / Ads / Reichweite checken","Learnings dokumentieren","Redaktions- & Kampagnenplanung"]
+      },
+      { name:"Mini-Break", start:"14:45", end:"14:55",
+        summary:"Mini-Reset für Augen & Energie.",
+        bullets:["Bewegung / frische Luft","Augen entspannen","Kurz durchatmen"]
+      },
+      { name:"Umsetzung & Low-Energy-Tasks", start:"14:55", end:"16:00",
+        summary:"Leichte Umsetzung ohne Druck: Varianten, Exporte, Recherche.",
+        bullets:["Varianten bauen / Feinschliff (low friction)","Exporte, Bildrecherche, kleinere Anpassungen","Aufgabenliste abarbeiten"]
+      },
+      { name:"Clean-Down & Übergabe", start:"16:00", end:"16:30",
+        summary:"Tag sauber abschließen – morgen ohne Reibung starten.",
+        bullets:["Dateien strukturieren (Figma/Adobe)","Notizen sichern, Status/Übergabe","3 klare To-dos für morgen"]
+      }
+    ];
+
+    const NOTIF_LEAD_MS = 5 * 60 * 1000;
+
+    // ----------------- Helpers -----------------
+    const pad = (n) => String(n).padStart(2, "0");
+    const formatClock = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    const formatHM = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    function msToTimer(ms){
+      const s = Math.max(0, Math.floor(ms/1000));
+      const hh = Math.floor(s/3600);
+      const mm = Math.floor((s%3600)/60);
+      const ss = s%60;
+      return hh>0 ? `${pad(hh)}:${pad(mm)}:${pad(ss)}` : `${pad(mm)}:${pad(ss)}`;
+    }
+    const todayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    function timeToDateToday(hm, now){
+      const [h,m] = hm.split(":").map(Number);
+      const d = new Date(now);
+      d.setHours(h,m,0,0);
+      return d;
+    }
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+    function buildPhaseHtml(phase){
+      const bullets = (phase.bullets||[]).map(li=>`<li>${escapeHtml(li)}</li>`).join("");
+      return `<div>${escapeHtml(phase.summary||"")}</div>${bullets?`<ul>${bullets}</ul>`:""}`;
+    }
+
+    // ----------------- Notification UI -----------------
+    const notifDot = document.getElementById("notifDot");
+    const notifText = document.getElementById("notifText");
+    const btnEnableNotif = document.getElementById("btnEnableNotif");
+    const btnTestNotif = document.getElementById("btnTestNotif");
+
+    function updateNotifUI(){
+      if (!("Notification" in window)){
+        notifDot.className = "dot bad";
+        notifText.textContent = "Benachrichtigungen: Browser unterstützt das nicht";
+        btnEnableNotif.disabled = true;
+        btnTestNotif.disabled = true;
+        return;
+      }
+      const perm = Notification.permission;
+      if (perm === "granted"){
+        notifDot.className = "dot good";
+        notifText.textContent = "Benachrichtigungen: aktiv";
+        btnTestNotif.disabled = false;
+      } else if (perm === "denied"){
+        notifDot.className = "dot bad";
+        notifText.textContent = "Benachrichtigungen: blockiert (Browser-Einstellungen)";
+        btnTestNotif.disabled = true;
+      } else {
+        notifDot.className = "dot warn";
+        notifText.textContent = "Benachrichtigungen: nicht erlaubt (klick zum Aktivieren)";
+        btnTestNotif.disabled = true;
+      }
+    }
+
+    btnEnableNotif.addEventListener("click", async () => {
+      if (!("Notification" in window)) return;
+      try{
+        const res = await Notification.requestPermission();
+        updateNotifUI();
+        if (res === "granted"){
+          new Notification("✅ Benachrichtigungen aktiviert", {
+            body: "Du bekommst 5 Minuten vor Phasenwechsel eine Erinnerung."
+          });
+        }
+      } catch(e){ console.warn(e); }
+    });
+
+    btnTestNotif.addEventListener("click", () => {
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+      try{
+        new Notification("🧪 Test-Benachrichtigung", {
+          body: "Wenn du das siehst, funktionieren Windows/Browser Notifications ✅",
+          tag: "md-dayplan-test",
+          renotify: true
+        });
+      } catch(e){ console.warn(e); }
+    });
+
+    // ----------------- Notes: Toggle (Today / Global) + midnight reset -----------------
+    const notesEl = document.getElementById("notes");
+    const notesInfo = document.getElementById("notesInfo");
+    const btnClearNotes = document.getElementById("btnClearNotes");
+
+    const btnModeToday = document.getElementById("btnModeToday");
+    const btnModeGlobal = document.getElementById("btnModeGlobal");
+
+    const NOTES_GLOBAL_KEY = "md_dayplan_notes_global_v1";
+    const NOTES_TODAY_PREFIX = "md_dayplan_notes_today_v1:";
+    const NOTES_STATE_KEY = "md_dayplan_notes_state_v1";
+
+    let activeDayKey = todayKey(new Date());
+    let notesMode = "today"; // default; will restore from state
+
+    const keyToday = (dayKey) => NOTES_TODAY_PREFIX + dayKey;
+
+    function loadNotes(mode, dayKey){
+      const key = (mode === "global") ? NOTES_GLOBAL_KEY : keyToday(dayKey);
+      const raw = localStorage.getItem(key);
+      if (!raw) return { text:"", savedAt:null };
+      try{
+        const obj = JSON.parse(raw);
+        if (obj && typeof obj.text === "string") return obj;
+        return { text:String(raw), savedAt:null };
+      } catch {
+        return { text:String(raw), savedAt:null };
+      }
+    }
+
+    function saveNotes(mode, dayKey, text){
+      const key = (mode === "global") ? NOTES_GLOBAL_KEY : keyToday(dayKey);
+      const payload = { text, savedAt: Date.now(), mode, dayKey };
+      localStorage.setItem(key, JSON.stringify(payload));
+      localStorage.setItem(NOTES_STATE_KEY, JSON.stringify({ lastDayKey: dayKey, lastMode: mode }));
+      updateNotesInfo(payload.savedAt, mode, dayKey);
+    }
+
+    function updateNotesInfo(savedAt, mode, dayKey){
+      const label = (mode === "global") ? "Global" : `Heute (${dayKey})`;
+      if (!savedAt){
+        notesInfo.textContent = `Modus: ${label} · Auto-Save aktiv`;
+        return;
+      }
+      const d = new Date(savedAt);
+      notesInfo.textContent = `Modus: ${label} · Zuletzt gespeichert: ${formatHM(d)}:${pad(d.getSeconds())}`;
+    }
+
+    function setMode(mode){
+      notesMode = mode;
+      btnModeToday.setAttribute("aria-pressed", mode === "today" ? "true" : "false");
+      btnModeGlobal.setAttribute("aria-pressed", mode === "global" ? "true" : "false");
+
+      const data = loadNotes(notesMode, activeDayKey);
+      notesEl.value = data.text || "";
+      updateNotesInfo(data.savedAt, notesMode, activeDayKey);
+
+      localStorage.setItem(NOTES_STATE_KEY, JSON.stringify({ lastDayKey: activeDayKey, lastMode: notesMode }));
+    }
+
+    btnModeToday.addEventListener("click", () => setMode("today"));
+    btnModeGlobal.addEventListener("click", () => setMode("global"));
+
+    // restore state
+    try{
+      const st = JSON.parse(localStorage.getItem(NOTES_STATE_KEY) || "{}");
+      activeDayKey = todayKey(new Date());
+      const preferred = (st?.lastMode === "global") ? "global" : "today";
+      setMode(preferred);
+    } catch {
+      setMode("today");
+    }
+
+    // autosave debounce
+    let saveTimer = null;
+    notesEl.addEventListener("input", () => {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => saveNotes(notesMode, activeDayKey, notesEl.value), 300);
+    });
+
+    btnClearNotes.addEventListener("click", () => {
+      if (!confirm("Notizen wirklich löschen? (Heute + Global)")) return;
+      localStorage.removeItem(NOTES_GLOBAL_KEY);
+      localStorage.removeItem(keyToday(activeDayKey));
+      notesEl.value = "";
+      updateNotesInfo(null, notesMode, activeDayKey);
+    });
+
+    function handleMidnightReset(now){
+      const dk = todayKey(now);
+      if (dk !== activeDayKey){
+        activeDayKey = dk;
+        // If in today mode, switch textarea to new day's notes
+        if (notesMode === "today"){
+          const data = loadNotes("today", activeDayKey);
+          notesEl.value = data.text || "";
+          updateNotesInfo(data.savedAt, "today", activeDayKey);
+        } else {
+          const data = loadNotes("global", activeDayKey);
+          updateNotesInfo(data.savedAt, "global", activeDayKey);
+        }
+        localStorage.setItem(NOTES_STATE_KEY, JSON.stringify({ lastDayKey: activeDayKey, lastMode: notesMode }));
+      }
+    }
+
+    // ----------------- UI elements -----------------
+    const phaseNameEl = document.getElementById("phaseName");
+    const phaseTimeEl = document.getElementById("phaseTime");
+    const phaseTimerEl = document.getElementById("phaseTimer");
+    const phaseDescEl = document.getElementById("phaseDesc");
+    const progressBarEl = document.getElementById("progressBar");
+    const clockTextEl = document.getElementById("clockText");
+    const nextWrapEl = document.getElementById("nextWrap");
+    const nextInEl = document.getElementById("nextIn");
+
+    // ----------------- Notification de-dup -----------------
+    const NOTIF_KEY = "md_dayplan_notifs_sent_v1";
+    const getSentMap = () => { try{ return JSON.parse(localStorage.getItem(NOTIF_KEY)||"{}")||{}; } catch { return {}; } };
+    const wasSent = (day, idx) => !!(getSentMap()?.[day]?.[String(idx)]);
+    function setSent(day, idx){
+      const map = getSentMap();
+      map[day] = map[day] || {};
+      map[day][String(idx)] = true;
+      localStorage.setItem(NOTIF_KEY, JSON.stringify(map));
+    }
+
+    function computeState(now){
+      const phases = SCHEDULE.map(p => ({
+        ...p,
+        startDate: timeToDateToday(p.start, now),
+        endDate: timeToDateToday(p.end, now)
+      }));
+      const dayStart = phases[0].startDate;
+      const dayEnd = phases[phases.length-1].endDate;
+
+      let currentIndex = -1;
+      for (let i=0;i<phases.length;i++){
+        if (now >= phases[i].startDate && now < phases[i].endDate){ currentIndex = i; break; }
+      }
+
+      let nextIndex = -1;
+      for (let i=0;i<phases.length;i++){
+        if (now < phases[i].startDate){ nextIndex = i; break; }
+      }
+
+      return { phases, currentIndex, nextIndex, dayStart, dayEnd, outside: currentIndex === -1 };
+    }
+
+    function renderNextPhases(now, phases, nextIndex, count=3){
+      nextWrapEl.innerHTML = "";
+
+      if (nextIndex === -1){
+        if (now >= phases[phases.length-1].endDate){
+          nextInEl.textContent = "morgen";
+          const p0 = SCHEDULE[0];
+          const card = document.createElement("div");
+          card.className = "next-card";
+          card.innerHTML = `
+            <div class="next-title">
+              <strong>Morgen: ${escapeHtml(p0.name)}</strong>
+              <span>${escapeHtml(p0.start)}–${escapeHtml(p0.end)}</span>
+            </div>
+            <div class="next-desc">${escapeHtml(p0.summary||"")}</div>
+          `;
+          nextWrapEl.appendChild(card);
+        } else {
+          nextInEl.textContent = "—";
+        }
+        return;
+      }
+
+      const first = phases[nextIndex];
+      nextInEl.textContent = `in ${msToTimer(first.startDate - now)}`;
+
+      phases.slice(nextIndex, nextIndex + count).forEach((p, idx) => {
+        const badge = idx === 0 ? "Als Nächstes" : `Danach (${idx+1})`;
+        const card = document.createElement("div");
+        card.className = "next-card";
+        card.innerHTML = `
+          <div class="next-title">
+            <strong>${escapeHtml(p.name)}</strong>
+            <span>${escapeHtml(p.start)}–${escapeHtml(p.end)}</span>
+          </div>
+          <div class="next-desc">${escapeHtml(badge)} · ${escapeHtml(p.summary||"")}</div>
+        `;
+        nextWrapEl.appendChild(card);
+      });
+    }
+
+    function maybeNotify(now, phases, currentIndex){
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+      if (currentIndex === phases.length-1) return;
+
+      const day = todayKey(now);
+      const cur = phases[currentIndex];
+      const next = phases[currentIndex+1];
+      const notifyAtMs = cur.endDate.getTime() - NOTIF_LEAD_MS;
+
+      if (!wasSent(day, currentIndex) && now.getTime() >= notifyAtMs && now < cur.endDate){
+        try{
+          new Notification(`⏳ In 5 Minuten: ${next.name}`, {
+            body: `Aktuelle Phase endet um ${formatHM(cur.endDate)}.\nNächste: ${next.start}–${next.end}`,
+            tag: `md-dayplan-${day}-${currentIndex}`
+          });
+          setSent(day, currentIndex);
+        } catch(e){ console.warn(e); }
+      }
+    }
+
+    function render(now){
+      clockTextEl.textContent = formatClock(now);
+      handleMidnightReset(now);
+
+      const { phases, currentIndex, nextIndex, dayStart, dayEnd, outside } = computeState(now);
+
+      renderNextPhases(now, phases, nextIndex, 3);
+
+      if (!outside){
+        const cur = phases[currentIndex];
+        phaseNameEl.textContent = cur.name;
+        phaseTimeEl.textContent = `${cur.start}–${cur.end} · endet um ${formatHM(cur.endDate)}`;
+
+        phaseTimerEl.textContent = msToTimer(cur.endDate - now);
+
+        const total = cur.endDate - cur.startDate;
+        const pct = Math.max(0, Math.min(1, (now - cur.startDate) / total));
+        progressBarEl.style.width = `${(pct*100).toFixed(2)}%`;
+
+        phaseDescEl.innerHTML = buildPhaseHtml(cur);
+
+        maybeNotify(now, phases, currentIndex);
+
+      } else {
+        progressBarEl.style.width = "0%";
+
+        if (now < dayStart){
+          phaseNameEl.textContent = "Noch nicht gestartet";
+          phaseTimeEl.textContent = `Start um ${formatHM(dayStart)} · noch ${msToTimer(dayStart - now)}`;
+          phaseTimerEl.textContent = msToTimer(dayStart - now);
+          phaseDescEl.innerHTML = `
+            <div>Du bist vor Arbeitsbeginn. Wenn du willst:</div>
+            <ul>
+              <li>Leichtes Warm-up (ohne Slack/Mail)</li>
+              <li>Heute 1 Hauptziel + 2 Nebenziele notieren</li>
+            </ul>
+          `;
+        } else if (now >= dayEnd){
+          phaseNameEl.textContent = "Arbeitstag beendet";
+          phaseTimeEl.textContent = `Ende um ${formatHM(dayEnd)}`;
+          phaseTimerEl.textContent = "00:00";
+          phaseDescEl.innerHTML = `
+            <div>Feierabend. Optional:</div>
+            <ul>
+              <li>Kurzer Rückblick: Was war der größte Hebel heute?</li>
+              <li>3 To-dos für morgen grob festhalten</li>
+            </ul>
+          `;
+        } else {
+          // Gap 12:45–13:00
+          let next = null;
+          for (let i=0;i<phases.length;i++){
+            if (now < phases[i].startDate){ next = phases[i]; break; }
+          }
+          phaseNameEl.textContent = "Übergang / Puffer";
+          phaseTimeEl.textContent = next ? `Nächste Phase startet um ${formatHM(next.startDate)}` : "—";
+          phaseTimerEl.textContent = next ? msToTimer(next.startDate - now) : "—";
+          phaseDescEl.innerHTML = `
+            <div>Geplanter Puffer statt Leerlauf – nutze ihn bewusst:</div>
+            <ul>
+              <li>Mini-Aufräumen (Dateien, Tabs, offene Notizen)</li>
+              <li>Context-Reset: nächstes Ziel 1 Satz</li>
+              <li>Kurz bewegen / Wasser</li>
+            </ul>
+          `;
+        }
+      }
+    }
+
+    // Init
+    updateNotifUI();
+    window.addEventListener("focus", updateNotifUI);
+
+    render(new Date());
+    setInterval(() => render(new Date()), 1000);
+
+    
+  </script>
+</body>
+</html>
