@@ -244,6 +244,89 @@
       padding: 2px 6px;
       border-radius: 8px;
     }
+
+.drink-item{
+  border:1px solid var(--border);
+  background: rgba(0,0,0,.12);
+  border-radius: 14px;
+  padding: 10px 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.drink-item label{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  cursor:pointer;
+  user-select:none;
+  width:100%;
+}
+.drink-item input[type="checkbox"]{
+  width:18px;
+  height:18px;
+  accent-color: var(--accent);
+}
+.drink-item .t{
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  white-space:nowrap;
+}
+.drink-item.checked{
+  background: linear-gradient(180deg, rgba(180, 110, 255, 0.14), rgba(104,243,178,.08));
+}
+
+
+#drinkBar{
+  background: linear-gradient(90deg, rgba(151, 110, 255, 0.9), rgba(104,243,178,.85));
+}
+
+.shortcuts{
+  max-width: 1100px;
+  margin: 0 auto 16px auto;
+  display:flex;
+  gap: 16px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.shortcut-group{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  padding: 8px 10px;
+  border:1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(0,0,0,.18);
+  box-shadow: var(--shadow);
+}
+
+.shortcut-title{
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 4px;
+  white-space:nowrap;
+}
+
+.shortcuts a{
+  text-decoration:none;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255,255,255,.06);
+  border:1px solid var(--border);
+  transition: background .15s ease, transform .1s ease;
+}
+
+.shortcuts a:hover{
+  background: rgba(151, 110, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+
   </style>
 </head>
 
@@ -255,6 +338,26 @@
         Arbeitszeit: <strong>08:00–16:30</strong> · Pause: <strong>13:00–13:30</strong>
       </div>
     </div>
+
+<nav class="shortcuts">
+  <div class="shortcut-group">
+    <span class="shortcut-title">🎨 Design</span>
+    <a href="https://photogradient.com/" target="_blank" rel="noopener">Photogradient</a>
+    <a href="https://www.pexels.com/de-de/" target="_blank" rel="noopener">Pexels</a>
+    <a href="https://pixabay.com/" target="_blank" rel="noopener">Pixabay</a>
+  </div>
+
+  <div class="shortcut-group">
+    <span class="shortcut-title">📣 Marketing</span>
+    <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a>
+    <a href="https://www.linkedin.com/" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://www.instagram.com/" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://elevenlabs.io/app/speech-synthesis/text-to-speech" target="_blank" rel="noopener">
+      ElevenLabs
+    </a>
+  </div>
+</nav>
+
 
     <div class="actions">
       <div class="pill" id="notifStatus">
@@ -343,6 +446,49 @@
         </div>
       </div>
     </section>
+
+<section class="card" id="hydrationCard" style="grid-column: 1 / -1;">
+  <div class="hd">
+    <h2>Trinken</h2>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <div class="toggle" role="group" aria-label="Trink-Reminder">
+        <button id="btnDrinkOn" type="button" aria-pressed="true" title="Trink-Reminder alle 30 Minuten aktiv">
+          Reminder an
+        </button>
+        <button id="btnDrinkOff" type="button" aria-pressed="false" title="Trink-Reminder aus">
+          Reminder aus
+        </button>
+      </div>
+
+      <div class="pill">
+        <span class="dot good"></span>
+        <span id="drinkText">0 / 2000 ml</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="bd">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
+      <button class="btn" id="btnDrinkAdd" type="button" title="+200ml hinzufügen">💧 +200 ml</button>
+      <button class="btn" id="btnDrinkUndo" type="button" title="Letzten +200ml Schritt zurück">↩︎ Undo</button>
+      <button class="btn" id="btnDrinkReset" type="button" title="Trinken für heute zurücksetzen">🧼 Reset</button>
+      <div class="pill" id="drinkHintPill"><span class="dot warn"></span><span>1 Klick = 200 ml</span></div>
+    </div>
+
+    <div class="progress" aria-label="Trinkfortschritt 0 bis 2000 ml" style="height:18px;">
+      <div class="bar" id="drinkBar" style="width:0%;"></div>
+    </div>
+
+    <div class="meta" style="margin-top:10px;">
+      <span id="drinkInfo">—</span>
+      <span>Ziel: 2000 ml · Tipp: Klick direkt nach dem Trinken 🙂</span>
+    </div>
+  </div>
+</section>
+
+
+
+
   </main>
 
   <div class="footer-hint">
@@ -582,6 +728,11 @@
           updateNotesInfo(data.savedAt, "global", activeDayKey);
         }
         localStorage.setItem(NOTES_STATE_KEY, JSON.stringify({ lastDayKey: activeDayKey, lastMode: notesMode }));
+
+        // hydration grid for new day
+renderDrinkUI(activeDayKey);
+
+
       }
     }
 
@@ -693,6 +844,9 @@
     function render(now){
       clockTextEl.textContent = formatClock(now);
       handleMidnightReset(now);
+if (typeof maybeDrinkReminder === "function") maybeDrinkReminder(now);
+
+
 
       const { phases, currentIndex, nextIndex, dayStart, dayEnd, outside } = computeState(now);
 
@@ -759,6 +913,139 @@
       }
     }
 
+
+// ----------------- Hydration: Progress bar (2000ml) + 30-min reminder -----------------
+const DRINK_GOAL_ML = 2000;
+const DRINK_STEP_ML = 200;
+
+const btnDrinkOn = document.getElementById("btnDrinkOn");
+const btnDrinkOff = document.getElementById("btnDrinkOff");
+const btnDrinkAdd = document.getElementById("btnDrinkAdd");
+const btnDrinkUndo = document.getElementById("btnDrinkUndo");
+const btnDrinkReset = document.getElementById("btnDrinkReset");
+
+const drinkBar = document.getElementById("drinkBar");
+const drinkText = document.getElementById("drinkText");
+const drinkInfo = document.getElementById("drinkInfo");
+
+const DRINK_STATE_KEY = "md_dayplan_drink_state_v2";          // reminder on/off
+const DRINK_DAY_PREFIX = "md_dayplan_drink_amount_v2:";       // + YYYY-MM-DD
+const DRINK_NOTIF_PREFIX = "md_dayplan_drink_notif_v2:";      // + YYYY-MM-DD (dedup per slot)
+
+function drinkKey(dayKey){ return DRINK_DAY_PREFIX + dayKey; }
+function drinkNotifKey(dayKey){ return DRINK_NOTIF_PREFIX + dayKey; }
+
+function loadDrinkEnabled(){
+  try{
+    const st = JSON.parse(localStorage.getItem(DRINK_STATE_KEY) || "{}");
+    return st?.enabled !== false; // default ON
+  } catch {
+    return true;
+  }
+}
+function saveDrinkEnabled(enabled){
+  localStorage.setItem(DRINK_STATE_KEY, JSON.stringify({ enabled }));
+}
+
+function loadDrinkMl(dayKey){
+  const raw = localStorage.getItem(drinkKey(dayKey));
+  const n = Number(raw);
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+}
+function saveDrinkMl(dayKey, ml){
+  localStorage.setItem(drinkKey(dayKey), String(Math.max(0, ml)));
+}
+
+function setDrinkToggle(enabled){
+  btnDrinkOn?.setAttribute("aria-pressed", enabled ? "true" : "false");
+  btnDrinkOff?.setAttribute("aria-pressed", enabled ? "false" : "true");
+  saveDrinkEnabled(enabled);
+  drinkInfo.textContent = enabled
+    ? "Reminder aktiv: alle 30 Minuten (während 08:00–16:30)."
+    : "Reminder aus.";
+}
+
+function renderDrinkUI(dayKey){
+  const ml = loadDrinkMl(dayKey);
+  const clamped = Math.min(ml, DRINK_GOAL_ML);
+  const pct = (clamped / DRINK_GOAL_ML) * 100;
+
+  drinkBar.style.width = `${pct.toFixed(2)}%`;
+  drinkText.textContent = `${ml} / ${DRINK_GOAL_ML} ml`;
+
+  // Buttons
+  btnDrinkUndo.disabled = ml <= 0;
+}
+
+btnDrinkOn?.addEventListener("click", () => setDrinkToggle(true));
+btnDrinkOff?.addEventListener("click", () => setDrinkToggle(false));
+
+btnDrinkAdd?.addEventListener("click", () => {
+  const ml = loadDrinkMl(activeDayKey) + DRINK_STEP_ML;
+  saveDrinkMl(activeDayKey, ml);
+  renderDrinkUI(activeDayKey);
+
+  // Optional: quick feedback notification (only if already granted)
+  if ("Notification" in window && Notification.permission === "granted"){
+    try{
+      new Notification("💧 +200 ml", { body: `Heute: ${ml} / ${DRINK_GOAL_ML} ml` , tag: `md-drink-add-${activeDayKey}`});
+    } catch {}
+  }
+});
+
+btnDrinkUndo?.addEventListener("click", () => {
+  const ml = Math.max(0, loadDrinkMl(activeDayKey) - DRINK_STEP_ML);
+  saveDrinkMl(activeDayKey, ml);
+  renderDrinkUI(activeDayKey);
+});
+
+btnDrinkReset?.addEventListener("click", () => {
+  if (!confirm("Trinkfortschritt für heute wirklich zurücksetzen?")) return;
+  saveDrinkMl(activeDayKey, 0);
+  renderDrinkUI(activeDayKey);
+
+  // reset dedup so reminders can fire again today
+  localStorage.removeItem(drinkNotifKey(activeDayKey));
+});
+
+function maybeDrinkReminder(now){
+  if (!loadDrinkEnabled()) return;
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "granted") return;
+
+  // only during work window
+  const start = timeToDateToday("08:00", now);
+  const end = timeToDateToday("16:30", now);
+  if (now < start || now >= end) return;
+
+  // trigger once per 30-min slot
+  const slotMin = now.getMinutes() < 30 ? 0 : 30;
+  const slotLabel = `${pad(now.getHours())}:${pad(slotMin)}`;
+
+  // Dedup map per day
+  let sent;
+  try{ sent = JSON.parse(localStorage.getItem(drinkNotifKey(activeDayKey)) || "{}") || {}; }
+  catch { sent = {}; }
+
+  if (sent[slotLabel]) return;
+
+  // send at the START of slot, with small tolerance (first 20s)
+  if (now.getMinutes() === slotMin && now.getSeconds() <= 20){
+    const ml = loadDrinkMl(activeDayKey);
+    try{
+      new Notification("💧 Trink-Reminder", {
+        body: `Zeit zu trinken. Aktuell: ${ml} / ${DRINK_GOAL_ML} ml`,
+        tag: `md-drink-rem-${activeDayKey}-${slotLabel}`
+      });
+      sent[slotLabel] = true;
+      localStorage.setItem(drinkNotifKey(activeDayKey), JSON.stringify(sent));
+    } catch(e){
+      console.warn(e);
+    }
+  }
+}
+
+
     // Init
     updateNotifUI();
     window.addEventListener("focus", updateNotifUI);
@@ -767,6 +1054,17 @@
     setInterval(() => render(new Date()), 1000);
 
     
+
+
+// init hydration
+(function initHydration(){
+  setDrinkToggle(loadDrinkEnabled());
+  renderDrinkUI(activeDayKey);
+})();
+
+
+
   </script>
 </body>
 </html>
+
