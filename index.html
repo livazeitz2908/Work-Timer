@@ -283,6 +283,50 @@
   background: linear-gradient(90deg, rgba(151, 110, 255, 0.9), rgba(104,243,178,.85));
 }
 
+.shortcuts{
+  max-width: 1100px;
+  margin: 0 auto 16px auto;
+  display:flex;
+  gap: 16px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.shortcut-group{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  padding: 8px 10px;
+  border:1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(0,0,0,.18);
+  box-shadow: var(--shadow);
+}
+
+.shortcut-title{
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 4px;
+  white-space:nowrap;
+}
+
+.shortcuts a{
+  text-decoration:none;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: var(--text);
+  background: rgba(255,255,255,.06);
+  border:1px solid var(--border);
+  transition: background .15s ease, transform .1s ease;
+}
+
+.shortcuts a:hover{
+  background: rgba(151, 110, 255, 0.25);
+  transform: translateY(-1px);
+}
+
+
   </style>
 </head>
 
@@ -294,6 +338,26 @@
         Arbeitszeit: <strong>08:00–16:30</strong> · Pause: <strong>13:00–13:30</strong>
       </div>
     </div>
+
+<nav class="shortcuts">
+  <div class="shortcut-group">
+    <span class="shortcut-title">🎨 Design</span>
+    <a href="https://photogradient.com/" target="_blank" rel="noopener">Photogradient</a>
+    <a href="https://www.pexels.com/de-de/" target="_blank" rel="noopener">Pexels</a>
+    <a href="https://pixabay.com/" target="_blank" rel="noopener">Pixabay</a>
+  </div>
+
+  <div class="shortcut-group">
+    <span class="shortcut-title">📣 Marketing</span>
+    <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a>
+    <a href="https://www.linkedin.com/" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://www.instagram.com/" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://elevenlabs.io/app/speech-synthesis/text-to-speech" target="_blank" rel="noopener">
+      ElevenLabs
+    </a>
+  </div>
+</nav>
+
 
     <div class="actions">
       <div class="pill" id="notifStatus">
