@@ -396,6 +396,17 @@
   margin-top: 14px;
 }
 
+/* Notes + Übungen nebeneinander (Desktop), gestapelt (Mobile) */
+.row-2{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 920px){
+  .row-2{ grid-template-columns: 1fr; }
+}
+
+
   </style>
 </head>
 
@@ -485,36 +496,72 @@
       </div>
     </aside>
 
-    <section class="card notes" style="grid-column: 1 / -1;">
-      <div class="hd">
-        <h2>Notizen</h2>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-          <div class="toggle" role="group" aria-label="Notizen Modus">
-            <button id="btnModeToday" type="button" aria-pressed="true" title="Notizen nur für heute (reset um Mitternacht)">
-              Heute
-            </button>
-            <button id="btnModeGlobal" type="button" aria-pressed="false" title="Dauerhafte Notizen (bleiben erhalten)">
-              Global
-            </button>
-          </div>
-          <div class="pill" title="Wird automatisch gespeichert">
-            <span class="dot good"></span>
-            <span>Auto-Save</span>
-          </div>
+    <!-- Notes + Übungen Row -->
+<div class="row-2" style="grid-column: 1 / -1;">
+  <!-- Notizen -->
+  <section class="card notes">
+    <div class="hd">
+      <h2>Notizen</h2>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <div class="toggle" role="group" aria-label="Notizen Modus">
+          <button id="btnModeToday" type="button" aria-pressed="true" title="Notizen nur für heute (reset um Mitternacht)">Heute</button>
+          <button id="btnModeGlobal" type="button" aria-pressed="false" title="Dauerhafte Notizen (bleiben erhalten)">Global</button>
         </div>
+        <div class="pill" title="Wird automatisch gespeichert">
+          <span class="dot good"></span>
+          <span>Auto-Save</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bd">
+      <textarea id="notes" placeholder="Notizen…"></textarea>
+      <div class="meta">
+        <span id="notesInfo">—</span>
+        <span>
+          Tipp: <span class="kbd">Strg</span> + <span class="kbd">F</span> durchsuchen ·
+          <span class="kbd">Strg</span> + <span class="kbd">S</span> nicht nötig
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Übungen -->
+  <section class="card" id="exCard" aria-live="polite">
+    <div class="hd">
+      <h2>Übungen</h2>
+      <div class="pill">
+        <span class="dot warn"></span>
+        <span id="exNextIn">in –</span>
+      </div>
+    </div>
+
+    <div class="bd">
+      <div class="pill" style="margin-bottom:10px;">
+        <span class="dot good"></span>
+        <span>Alle 15 Min · Pause 13:00–13:30 ausgenommen</span>
       </div>
 
-      <div class="bd">
-        <textarea id="notes" placeholder="Notizen…"></textarea>
-        <div class="meta">
-          <span id="notesInfo">—</span>
-          <span>
-            Tipp: <span class="kbd">Strg</span> + <span class="kbd">F</span> durchsuchen ·
-            <span class="kbd">Strg</span> + <span class="kbd">S</span> nicht nötig
-          </span>
+      <!-- kleine Stopuhr direkt hier -->
+      <div class="sw-wrap" style="margin-top:0; padding-top:0; border-top:0;">
+        <div class="pill" title="Stopuhr (für 30–60 Sek Übungen)">
+          <span class="dot warn"></span>
+          <span>Stopuhr</span>
         </div>
+        <div class="sw-time" id="exSwTime">00:00.0</div>
+        <button class="btn" id="exSwStart" type="button">▶ Start</button>
+        <button class="btn" id="exSwReset" type="button">↺ Reset</button>
       </div>
-    </section>
+
+      <div class="next" id="exNextWrap" style="margin-top:12px;"></div>
+
+      <div class="footer-hint" style="margin:12px 0 0 0;">
+        Tipp: 30–60 Sek reichen: <code>Bauch</code> → <code>Beine</code> → <code>Schultern</code>.
+      </div>
+    </div>
+  </section>
+</div>
+
 
 <section class="card" id="hydrationCard" style="grid-column: 1 / -1;">
   <div class="hd">
@@ -947,6 +994,7 @@ renderDrinkUI(activeDayKey);
       handleMidnightReset(now);
 if (typeof maybeDrinkReminder === "function") maybeDrinkReminder(now);
 if (typeof maybeMoveReminder === "function") maybeMoveReminder(now);
+renderExerciseCard(now);
 
 
 
@@ -1071,6 +1119,89 @@ const MOVE_EXERCISES = [
     body: "30 Sek Bauchspannung + 15 Sek Fersenheben + 15 Sek Schulterblätter zusammenziehen. Fertig."
   }
 ];
+
+
+// ----------------- Übungen Card: nächste 3 Slots rendern -----------------
+const exNextInEl = document.getElementById("exNextIn");
+const exNextWrapEl = document.getElementById("exNextWrap");
+
+function isLunchBreak(now){
+  const lunchStart = timeToDateToday("13:00", now);
+  const lunchEnd = timeToDateToday("13:30", now);
+  return now >= lunchStart && now < lunchEnd;
+}
+
+function buildMoveSlotsForToday(now){
+  const slots = [];
+  const dayStart = timeToDateToday("08:00", now);
+  const dayEnd = timeToDateToday("16:30", now);
+
+  for (let t = new Date(dayStart); t < dayEnd; t = new Date(t.getTime() + 15*60*1000)){
+    // skip lunch window
+    const inLunch = (t >= timeToDateToday("13:00", now) && t < timeToDateToday("13:30", now));
+    if (inLunch) continue;
+    slots.push(t);
+  }
+  return { slots, dayStart, dayEnd };
+}
+
+function exerciseForSlot(slotDate, dayStart){
+  const idx = Math.floor((slotDate - dayStart) / (15*60*1000));
+  return MOVE_EXERCISES[idx % MOVE_EXERCISES.length];
+}
+
+function renderExerciseCard(now){
+  if (!exNextInEl || !exNextWrapEl) return;
+
+  const { slots, dayStart, dayEnd } = buildMoveSlotsForToday(now);
+
+  // outside work hours
+  if (now < dayStart){
+    exNextInEl.textContent = `Start um ${formatHM(dayStart)}`;
+  } else if (now >= dayEnd){
+    exNextInEl.textContent = "morgen";
+  } else if (isLunchBreak(now)){
+    exNextInEl.textContent = "Mittagspause";
+  }
+
+  const upcoming = slots.filter(d => d > now).slice(0,3);
+
+  exNextWrapEl.innerHTML = "";
+
+  if (upcoming.length === 0){
+    const card = document.createElement("div");
+    card.className = "next-card";
+    card.innerHTML = `
+      <div class="next-title">
+        <strong>Keine weiteren Übungen heute</strong>
+        <span>—</span>
+      </div>
+      <div class="next-desc">Feierabend-Modus 🙂</div>
+    `;
+    exNextWrapEl.appendChild(card);
+    return;
+  }
+
+  exNextInEl.textContent = `in ${msToTimer(upcoming[0] - now)}`;
+
+  upcoming.forEach((slot, i) => {
+    const ex = exerciseForSlot(slot, dayStart);
+    const badge = i === 0 ? "Als Nächstes" : `Danach (${i+1})`;
+
+    const card = document.createElement("div");
+    card.className = "next-card";
+    card.innerHTML = `
+      <div class="next-title">
+        <strong>${escapeHtml(ex.title)}</strong>
+        <span>${escapeHtml(formatHM(slot))}</span>
+      </div>
+      <div class="next-desc">${escapeHtml(badge)} · ${escapeHtml(ex.body)}</div>
+    `;
+    exNextWrapEl.appendChild(card);
+  });
+}
+
+
 
 let lastMoveSlotLabelShown = null;
 
@@ -1384,6 +1515,63 @@ function maybeDrinkReminder(now){
   renderDrinkUI(activeDayKey);
 })();
 
+// ----------------- Stopuhr (Übungen Card) -----------------
+const exSwTimeEl = document.getElementById("exSwTime");
+const exSwStartBtn = document.getElementById("exSwStart");
+const exSwResetBtn = document.getElementById("exSwReset");
+
+let exSwRunning = false;
+let exSwStartTs = 0;
+let exSwElapsed = 0;
+let exSwTimer = null;
+
+function exSwFormat(ms){
+  const totalTenths = Math.floor(ms / 100);
+  const tenths = totalTenths % 10;
+  const totalSeconds = Math.floor(totalTenths / 10);
+  const mm = Math.floor(totalSeconds / 60);
+  const ss = totalSeconds % 60;
+  return `${pad(mm)}:${pad(ss)}.${tenths}`;
+}
+
+function exSwRender(){
+  if (!exSwTimeEl) return;
+  const ms = exSwRunning ? (exSwElapsed + (performance.now() - exSwStartTs)) : exSwElapsed;
+  exSwTimeEl.textContent = exSwFormat(ms);
+}
+
+function exSwStart(){
+  if (exSwRunning) return;
+  exSwRunning = true;
+  exSwStartTs = performance.now();
+  exSwStartBtn.textContent = "⏸ Pause";
+  exSwTimer = setInterval(exSwRender, 100);
+  exSwRender();
+}
+
+function exSwPause(){
+  if (!exSwRunning) return;
+  exSwRunning = false;
+  exSwElapsed += (performance.now() - exSwStartTs);
+  exSwStartBtn.textContent = "▶ Start";
+  clearInterval(exSwTimer);
+  exSwTimer = null;
+  exSwRender();
+}
+
+function exSwReset(){
+  exSwRunning = false;
+  exSwElapsed = 0;
+  exSwStartTs = 0;
+  exSwStartBtn.textContent = "▶ Start";
+  clearInterval(exSwTimer);
+  exSwTimer = null;
+  exSwRender();
+}
+
+exSwStartBtn?.addEventListener("click", () => exSwRunning ? exSwPause() : exSwStart());
+exSwResetBtn?.addEventListener("click", exSwReset);
+exSwRender();
 
 
   </script>
