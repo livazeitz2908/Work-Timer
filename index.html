@@ -564,7 +564,39 @@
     🔔 Benachrichtigungen: Falls du lokal öffnest und es zickt, starte im Ordner einen Server:
     <code>python -m http.server</code> und öffne <code>http://localhost:8000</code>.
   </div>
+  <!-- Movement Reminder Overlay -->
+<div class="overlay" id="moveOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Bewegungs-Erinnerung">
+  <div class="overlay-card">
+    <div class="overlay-hd">
+      <strong>🧠 15-Minuten-Bewegung</strong>
+      <button class="btn" id="btnMoveClose" type="button" title="Schließen">✕</button>
+    </div>
 
+    <div class="overlay-bd">
+      <h3 class="move-title" id="moveTitle">Kurz bewegen</h3>
+      <div class="move-desc" id="moveBody">—</div>
+
+      <div class="sw-wrap" aria-label="Stopuhr">
+        <div class="pill" title="Stopuhr (für 30–60 Sek Übungen)">
+          <span class="dot warn"></span>
+          <span>Stopuhr</span>
+        </div>
+        <div class="sw-time" id="swTime">00:00.0</div>
+        <button class="btn" id="swStart" type="button">▶ Start</button>
+        <button class="btn" id="swReset" type="button">↺ Reset</button>
+      </div>
+
+      <div class="overlay-actions">
+        <button class="btn" id="btnMoveDone" type="button">✅ Erledigt</button>
+        <button class="btn" id="btnMoveSnooze" type="button">⏰ 5 Min später</button>
+      </div>
+
+      <div class="footer-hint" style="margin:12px 0 0 0;">
+        Tipp: 30–60 Sek reichen: <code>Bauch</code> → <code>Beine</code> → <code>Schultern</code>. Leise & unauffällig.
+      </div>
+    </div>
+  </div>
+</div>
   <script>
     // ----------------- Schedule -----------------
     const SCHEDULE = [
@@ -1356,39 +1388,7 @@ function maybeDrinkReminder(now){
 
   </script>
 
-  <!-- Movement Reminder Overlay -->
-<div class="overlay" id="moveOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Bewegungs-Erinnerung">
-  <div class="overlay-card">
-    <div class="overlay-hd">
-      <strong>🧠 15-Minuten-Bewegung</strong>
-      <button class="btn" id="btnMoveClose" type="button" title="Schließen">✕</button>
-    </div>
 
-    <div class="overlay-bd">
-      <h3 class="move-title" id="moveTitle">Kurz bewegen</h3>
-      <div class="move-desc" id="moveBody">—</div>
-
-      <div class="sw-wrap" aria-label="Stopuhr">
-        <div class="pill" title="Stopuhr (für 30–60 Sek Übungen)">
-          <span class="dot warn"></span>
-          <span>Stopuhr</span>
-        </div>
-        <div class="sw-time" id="swTime">00:00.0</div>
-        <button class="btn" id="swStart" type="button">▶ Start</button>
-        <button class="btn" id="swReset" type="button">↺ Reset</button>
-      </div>
-
-      <div class="overlay-actions">
-        <button class="btn" id="btnMoveDone" type="button">✅ Erledigt</button>
-        <button class="btn" id="btnMoveSnooze" type="button">⏰ 5 Min später</button>
-      </div>
-
-      <div class="footer-hint" style="margin:12px 0 0 0;">
-        Tipp: 30–60 Sek reichen: <code>Bauch</code> → <code>Beine</code> → <code>Schultern</code>. Leise & unauffällig.
-      </div>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
