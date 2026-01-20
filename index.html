@@ -326,6 +326,75 @@
   transform: translateY(-1px);
 }
 
+/* -------- Movement Overlay + Stopwatch -------- */
+.overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 9999;
+  backdrop-filter: blur(6px);
+}
+.overlay[aria-hidden="false"]{ display:flex; }
+
+.overlay-card{
+  width: min(640px, 100%);
+  border:1px solid var(--border);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+  box-shadow: var(--shadow);
+  overflow:hidden;
+}
+.overlay-hd{
+  padding: 14px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+}
+.overlay-hd strong{ font-size: 14px; letter-spacing:.2px; }
+.overlay-bd{ padding: 16px; }
+
+.move-title{
+  font-size: 18px;
+  margin: 0 0 8px 0;
+}
+.move-desc{
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.sw-wrap{
+  display:flex;
+  gap: 12px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top:1px solid var(--border);
+}
+.sw-time{
+  font-family: var(--mono);
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: .6px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border:1px solid var(--border);
+  background: rgba(0,0,0,.18);
+}
+.overlay-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap:wrap;
+  margin-top: 14px;
+}
 
   </style>
 </head>
@@ -845,6 +914,7 @@ renderDrinkUI(activeDayKey);
       clockTextEl.textContent = formatClock(now);
       handleMidnightReset(now);
 if (typeof maybeDrinkReminder === "function") maybeDrinkReminder(now);
+if (typeof maybeMoveReminder === "function") maybeMoveReminder(now);
 
 
 
@@ -913,6 +983,226 @@ if (typeof maybeDrinkReminder === "function") maybeDrinkReminder(now);
       }
     }
 
+// ----------------- Movement: 15-min reminder (excluding lunch) + overlay + stopwatch -----------------
+const MOVE_STATE_KEY = "md_dayplan_move_state_v1";            // enabled + snoozeUntil
+const MOVE_NOTIF_PREFIX = "md_dayplan_move_notif_v1:";        // + YYYY-MM-DD (dedup per slot)
+function moveNotifKey(dayKey){ return MOVE_NOTIF_PREFIX + dayKey; }
+
+function loadMoveState(){
+  try{
+    const st = JSON.parse(localStorage.getItem(MOVE_STATE_KEY) || "{}");
+    return {
+      enabled: st?.enabled !== false,          // default ON
+      snoozeUntil: Number(st?.snoozeUntil || 0)
+    };
+  } catch {
+    return { enabled:true, snoozeUntil:0 };
+  }
+}
+function saveMoveState(st){
+  localStorage.setItem(MOVE_STATE_KEY, JSON.stringify({
+    enabled: st?.enabled !== false,
+    snoozeUntil: Number(st?.snoozeUntil || 0)
+  }));
+}
+function loadMoveSent(dayKey){
+  try{ return JSON.parse(localStorage.getItem(moveNotifKey(dayKey)) || "{}") || {}; }
+  catch { return {}; }
+}
+function saveMoveSent(dayKey, map){
+  localStorage.setItem(moveNotifKey(dayKey), JSON.stringify(map || {}));
+}
+
+const moveOverlay = document.getElementById("moveOverlay");
+const moveTitle = document.getElementById("moveTitle");
+const moveBody = document.getElementById("moveBody");
+const btnMoveClose = document.getElementById("btnMoveClose");
+const btnMoveDone = document.getElementById("btnMoveDone");
+const btnMoveSnooze = document.getElementById("btnMoveSnooze");
+
+// Exercises (leise, am Schreibtisch)
+const MOVE_EXERCISES = [
+  {
+    title: "Bauch aktivieren (40–60 Sek)",
+    body: "Aufrecht sitzen. Bauchspannung aufbauen (als würdest du einen Reißverschluss schließen). Ruhig weiteratmen. Optional: 5 Sek halten / 5 Sek lösen."
+  },
+  {
+    title: "Beine/Waden (30–45 Sek)",
+    body: "Fersen langsam anheben und absenken (8–12x) oder Füße kreisen. Wenn du magst: Oberschenkel 5 Sek anspannen → lösen (3x)."
+  },
+  {
+    title: "Schulterblätter (30–45 Sek)",
+    body: "Schulterblätter 5 Sek zusammenziehen → lösen (3–4x). Danach 2–3 sehr kleine Schulterkreise, langsam."
+  },
+  {
+    title: "Mini-Kombi (60 Sek)",
+    body: "30 Sek Bauchspannung + 15 Sek Fersenheben + 15 Sek Schulterblätter zusammenziehen. Fertig."
+  }
+];
+
+let lastMoveSlotLabelShown = null;
+
+function openMoveOverlay(ex){
+  moveTitle.textContent = ex?.title || "Kurz bewegen";
+  moveBody.textContent = ex?.body || "30–60 Sekunden reichen.";
+  moveOverlay.setAttribute("aria-hidden","false");
+  // Fokus auf "Erledigt" (barrierearm)
+  setTimeout(() => btnMoveDone?.focus(), 0);
+}
+
+function closeMoveOverlay(){
+  moveOverlay.setAttribute("aria-hidden","true");
+}
+
+// Close handlers
+btnMoveClose?.addEventListener("click", closeMoveOverlay);
+moveOverlay?.addEventListener("click", (e) => {
+  if (e.target === moveOverlay) closeMoveOverlay();
+});
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && moveOverlay?.getAttribute("aria-hidden") === "false") closeMoveOverlay();
+});
+
+btnMoveDone?.addEventListener("click", () => {
+  // Mark the current slot as done (dedup) if we know it
+  const now = new Date();
+  const day = todayKey(now);
+  if (lastMoveSlotLabelShown){
+    const sent = loadMoveSent(day);
+    sent[lastMoveSlotLabelShown] = true;
+    saveMoveSent(day, sent);
+  }
+  closeMoveOverlay();
+});
+
+btnMoveSnooze?.addEventListener("click", () => {
+  const st = loadMoveState();
+  st.snoozeUntil = Date.now() + 5*60*1000;
+  saveMoveState(st);
+  closeMoveOverlay();
+});
+
+// 15-min slot label
+function get15SlotLabel(now){
+  const m = now.getMinutes();
+  const slotMin = m - (m % 15); // 0,15,30,45
+  return `${pad(now.getHours())}:${pad(slotMin)}`;
+}
+
+function isLunchBreak(now){
+  const lunchStart = timeToDateToday("13:00", now);
+  const lunchEnd = timeToDateToday("13:30", now);
+  return now >= lunchStart && now < lunchEnd;
+}
+
+function maybeMoveReminder(now){
+  const st = loadMoveState();
+  if (!st.enabled) return;
+
+  // Snooze
+  if (st.snoozeUntil && Date.now() < st.snoozeUntil) return;
+
+  // only during work window
+  const start = timeToDateToday("08:00", now);
+  const end = timeToDateToday("16:30", now);
+  if (now < start || now >= end) return;
+
+  // exclude lunch break
+  if (isLunchBreak(now)) return;
+
+  const day = todayKey(now);
+  const slotLabel = get15SlotLabel(now);
+
+  // Dedup map per day
+  const sent = loadMoveSent(day);
+  if (sent[slotLabel]) return;
+
+  // Fire near the start of each slot (first 20 seconds)
+  const isSlotStart = (now.getMinutes() % 15 === 0) && (now.getSeconds() <= 20);
+  if (!isSlotStart) return;
+
+  // Choose exercise (rotate with slot)
+  const idx = (now.getHours()*60 + now.getMinutes()) / 15;
+  const ex = MOVE_EXERCISES[idx % MOVE_EXERCISES.length];
+
+  lastMoveSlotLabelShown = slotLabel;
+
+  // In-page overlay (always)
+  openMoveOverlay(ex);
+
+  // Optional notification (if granted)
+  if ("Notification" in window && Notification.permission === "granted"){
+    try{
+      new Notification("🧍 Bewegung (1 Minute)", {
+        body: ex.title,
+        tag: `md-move-${day}-${slotLabel}`
+      });
+    } catch(e){ console.warn(e); }
+  }
+
+  // Mark as sent (so it won't repeat)
+  sent[slotLabel] = true;
+  saveMoveSent(day, sent);
+}
+
+
+// ----------------- Stopwatch (for overlay) -----------------
+const swTimeEl = document.getElementById("swTime");
+const swStartBtn = document.getElementById("swStart");
+const swResetBtn = document.getElementById("swReset");
+
+let swRunning = false;
+let swStartTs = 0;
+let swElapsed = 0;
+let swTickTimer = null;
+
+function formatStopwatch(ms){
+  const totalTenths = Math.floor(ms / 100);
+  const tenths = totalTenths % 10;
+  const totalSeconds = Math.floor(totalTenths / 10);
+  const mm = Math.floor(totalSeconds / 60);
+  const ss = totalSeconds % 60;
+  return `${pad(mm)}:${pad(ss)}.${tenths}`;
+}
+
+function swRender(){
+  if (!swTimeEl) return;
+  const ms = swRunning ? (swElapsed + (performance.now() - swStartTs)) : swElapsed;
+  swTimeEl.textContent = formatStopwatch(ms);
+}
+
+function swStart(){
+  if (swRunning) return;
+  swRunning = true;
+  swStartTs = performance.now();
+  swStartBtn.textContent = "⏸ Pause";
+  swTickTimer = setInterval(swRender, 100);
+  swRender();
+}
+function swPause(){
+  if (!swRunning) return;
+  swRunning = false;
+  swElapsed = swElapsed + (performance.now() - swStartTs);
+  swStartBtn.textContent = "▶ Start";
+  clearInterval(swTickTimer);
+  swTickTimer = null;
+  swRender();
+}
+function swReset(){
+  swRunning = false;
+  swElapsed = 0;
+  swStartTs = 0;
+  swStartBtn.textContent = "▶ Start";
+  clearInterval(swTickTimer);
+  swTickTimer = null;
+  swRender();
+}
+
+swStartBtn?.addEventListener("click", () => swRunning ? swPause() : swStart());
+swResetBtn?.addEventListener("click", swReset);
+
+// Initial render
+swRender();
 
 // ----------------- Hydration: Progress bar (2000ml) + 30-min reminder -----------------
 const DRINK_GOAL_ML = 2000;
@@ -1065,5 +1355,40 @@ function maybeDrinkReminder(now){
 
 
   </script>
+
+  <!-- Movement Reminder Overlay -->
+<div class="overlay" id="moveOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Bewegungs-Erinnerung">
+  <div class="overlay-card">
+    <div class="overlay-hd">
+      <strong>🧠 15-Minuten-Bewegung</strong>
+      <button class="btn" id="btnMoveClose" type="button" title="Schließen">✕</button>
+    </div>
+
+    <div class="overlay-bd">
+      <h3 class="move-title" id="moveTitle">Kurz bewegen</h3>
+      <div class="move-desc" id="moveBody">—</div>
+
+      <div class="sw-wrap" aria-label="Stopuhr">
+        <div class="pill" title="Stopuhr (für 30–60 Sek Übungen)">
+          <span class="dot warn"></span>
+          <span>Stopuhr</span>
+        </div>
+        <div class="sw-time" id="swTime">00:00.0</div>
+        <button class="btn" id="swStart" type="button">▶ Start</button>
+        <button class="btn" id="swReset" type="button">↺ Reset</button>
+      </div>
+
+      <div class="overlay-actions">
+        <button class="btn" id="btnMoveDone" type="button">✅ Erledigt</button>
+        <button class="btn" id="btnMoveSnooze" type="button">⏰ 5 Min später</button>
+      </div>
+
+      <div class="footer-hint" style="margin:12px 0 0 0;">
+        Tipp: 30–60 Sek reichen: <code>Bauch</code> → <code>Beine</code> → <code>Schultern</code>. Leise & unauffällig.
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
